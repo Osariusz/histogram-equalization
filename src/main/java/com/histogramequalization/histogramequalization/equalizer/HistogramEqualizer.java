@@ -18,6 +18,12 @@ public class HistogramEqualizer {
         this.image = image;
     }
 
+    private void setImagePart(List<Integer> channelPixels, int start, int end, List<Integer> newPixelValue){
+        for (int i = start; i < end; ++i) {
+            channelPixels.set(i, newPixelValue.get(channelPixels.get(i)));
+        }
+    }
+
     private void equalizeChannel(List<Integer> channelPixels) {
         int allPixels = image.getHeight() * image.getWidth();
         List<Integer> valueCount = new ArrayList<>(Collections.nCopies(256, 0));
@@ -34,9 +40,29 @@ public class HistogramEqualizer {
             newPixelValue.set(i, newValue);
         }
 
-        for (int i = 0; i < channelPixels.size(); ++i) {
-            channelPixels.set(i, newPixelValue.get(channelPixels.get(i)));
+        int cores = Runtime.getRuntime().availableProcessors();
+        List<Thread> threads = new ArrayList<>(cores);
+        for(int i = 0;i<cores;++i){
+            Integer threadStep = channelPixels.size()/cores;
+            Integer start = threadStep*i;
+            Thread thread = new Thread(() -> {
+                Integer end = start+threadStep;
+                if(end+threadStep>=channelPixels.size()){
+                    end = channelPixels.size();
+                }
+                setImagePart(channelPixels,start,end,newPixelValue);
+            });
+            thread.start();
+            threads.add(thread);
         }
+        for(Thread thread : threads){
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
     }
 
     public void equalizeHistogram() {
