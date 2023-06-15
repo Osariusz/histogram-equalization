@@ -18,7 +18,7 @@ public class HistogramEqualizer {
         this.image = image;
     }
 
-    private void setImagePart(List<Integer> channelPixels, int start, int end, List<Integer> newPixelValue){
+    private void setImagePart(List<Integer> channelPixels, int start, int end, List<Integer> newPixelValue) {
         for (int i = start; i < end; ++i) {
             channelPixels.set(i, newPixelValue.get(channelPixels.get(i)));
         }
@@ -42,20 +42,20 @@ public class HistogramEqualizer {
 
         int cores = Runtime.getRuntime().availableProcessors();
         List<Thread> threads = new ArrayList<>(cores);
-        for(int i = 0;i<cores;++i){
-            Integer threadStep = channelPixels.size()/cores;
-            Integer start = threadStep*i;
+        for (int i = 0; i < cores; ++i) {
+            Integer threadStep = channelPixels.size() / cores;
+            Integer start = threadStep * i;
             Thread thread = new Thread(() -> {
-                Integer end = start+threadStep;
-                if(end+threadStep>=channelPixels.size()){
+                Integer end = start + threadStep;
+                if (end + threadStep >= channelPixels.size()) {
                     end = channelPixels.size();
                 }
-                setImagePart(channelPixels,start,end,newPixelValue);
+                setImagePart(channelPixels, start, end, newPixelValue);
             });
             thread.start();
             threads.add(thread);
         }
-        for(Thread thread : threads){
+        for (Thread thread : threads) {
             try {
                 thread.join();
             } catch (InterruptedException e) {
